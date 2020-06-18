@@ -2,6 +2,8 @@ import random
 from scipy.stats import f, t
 from prettytable import PrettyTable
 import numpy as np
+import time
+
 
 x1min = -1
 x1max = 2
@@ -50,7 +52,6 @@ X2kv = kv(X22)
 X3kv = kv(X33)
 
 Y = [[random.randrange(ymin, ymax, 1) for _ in range(15)] for __ in range(m)]
-
 
 Yav = [sum([Y[i][k] / m for i in range(m)]) for k in range(15)]
 
@@ -112,6 +113,7 @@ X0 = [1]*15
 b = np.linalg.lstsq(list(zip(X0, X1, X2, X3, X12, X13, X23, X123, X1kv, X2kv, X3kv)), Yav, rcond=None)[0]
 b = [round(i, 3) for i in b]
 print("\nКоефіцієти b:", b)
+start_time = time.perf_counter()
 print("Перевірка:")
 for i in range(15):
     result = b[0] + b[1]*X1[i]+b[2]*X2[i]+b[3]*X3[i]+b[4]*X1[i]*X2[i]+b[5]*X1[i]*X3[i]+b[6]*X2[i]*X3[i]+b[7]*X1[i]*X2[i]*X3[i]+b[8]*X1kv[i]+b[9]*X2kv[i]+b[10]*X3kv[i]
@@ -125,8 +127,11 @@ f2 = N = 15
 fisher = f.isf(*[q / f2, f1, (f2 - 1) * f1])
 Gt = fisher / (fisher + (f2 - 1))
 print(f"Gp = {Gp}, Gt = {Gt:.4f}")
+
 if Gp < Gt:
     print("Дисперсія однорідна")
+    print("Час перевірки: {:.7f} c\n".format(time.perf_counter() - start_time))
+    start_time = time.perf_counter()
     print("\n__________Критерій Стьюдента____________")
     sb = sum(d) / N
     ssbs = sb / N * m
@@ -171,11 +176,14 @@ if Gp < Gt:
             print("t%s < ttabl, b%s не значимий" % (i, i))
             b[i] = 0
             d_ -= 1
+    print("Час перевірки: {:.7f}".format(time.perf_counter() - start_time))
+    start_time = time.perf_counter()
     print("\nПеревірка в спрощене рівняння регресії:")
     for i in range(15):
         result = b[0] + b[1]*X1[i] + b[2]*X2[i] + b[3]*X3[i] + b[4]*X1[i]*X2[i] + b[5]*X1[i]*X3[i] + b[6]*X2[i]*X3[i] +\
                  b[7]*X1[i]*X2[i]*X3[i] + b[8]*X1kv[i] + b[9]*X2kv[i] + b[10]*X3kv[i]
         print(f"Yav{i+1} = {result:.3f} = {Yav[i]:.3f}")
+    print("Час перевірки: {:.7f}".format(time.perf_counter() - start_time))
 
     yy = [0 for _ in range(15)]
 
@@ -196,6 +204,8 @@ if Gp < Gt:
     yy[12] = b[0]+b[1]*X1[12]+b[2]*X2[12]+b[3]*X3[12]+b[4]*X12[12]+b[5]*X13[12]+b[6]*X23[12]+b[7]*X123[12]+b[8]*X1kv[12]+b[9]*X2kv[12]+b[10]*X3kv[12]
     yy[13] = b[0]+b[1]*X1[13]+b[2]*X2[13]+b[3]*X3[13]+b[4]*X12[13]+b[5]*X13[13]+b[6]*X23[13]+b[7]*X123[13]+b[8]*X1kv[13]+b[9]*X2kv[13]+b[10]*X3kv[13]
     yy[14] = b[0]+b[1]*X1[14]+b[2]*X2[14]+b[3]*X3[14]+b[4]*X12[14]+b[5]*X13[14]+b[6]*X23[14]+b[7]*X123[14]+b[8]*X1kv[14]+b[9]*X2kv[14]+b[10]*X3kv[14]
+
+    start_time = time.perf_counter()
     print("\n______________Критерій Фішера__________________")
     print(d_, " значимих коефіцієнтів")
     f4 = N - d_
@@ -220,6 +230,8 @@ if Gp < Gt:
         m += 1
     else:
         print(f"Fp = {Fp:.2f} < Ft = {Ft:.2f}\nРівняння адекватно оригіналу")
+    print("Час перевірки: {:.7f}".format(time.perf_counter() - start_time))
 else:
     print("Дисперсія  неоднорід на(збільшемо кількість дослідів)")
+    print("Час перевірки: {:.7f} c\n".format(time.perf_counter() - start_time))
     m += 1
